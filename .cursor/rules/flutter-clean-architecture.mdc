@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+description: Flutter Clean Architecture patterns and folder structure guidelines
+---
+
+# Flutter Clean Architecture Guidelines
+
+This project follows **Clean Architecture** principles with strict separation of concerns across layers.
+
+## 📁 Project Structure
+
+The main entry point is [main.dart](mdc:lib/main.dart), which initializes the app and routing.
+
+### Core Layers:
+
+- **`lib/presentation/`** — UI layer (pages, widgets, controllers)
+- **`lib/domain/`** — Business logic layer (entities, repositories interfaces, use cases)  
+- **`lib/data/`** — Data layer (models, repository implementations, mock data)
+- **`lib/core/`** — Shared utilities (constants, theme, utils)
+
+## 🏗️ Architecture Rules
+
+### Dependency Flow
+- **Presentation** → **Domain** → **Data**
+- Never import from outer layers to inner layers
+- Use dependency injection with GetX (`Get.put`, `Get.lazyPut`)
+
+### File Organization
+- **Controllers**: `presentation/controllers/`
+- **Pages**: `presentation/pages/`
+- **Widgets**: `presentation/widgets/`
+- **Entities**: `domain/entities/`
+- **Repositories**: `domain/repositories/` (interfaces) + `data/repositories/` (implementations)
+- **Models**: `data/models/`
+- **Use Cases**: `domain/usecases/`
+
+### State Management
+- Use **GetX** for state management
+- Controllers extend `GetxController`
+- Use `obs` for reactive variables
+- Use `Get.find()` for dependency injection
+
+### Mock Data Integration
+- Mock data stored in `assets/mock/` directory
+- Repository implementations use mock data initially
+- Ready for API integration by swapping implementations
+
+## 🎯 Key Principles
+
+- **KISS** — Keep it simple, avoid unnecessary complexity
+- **DRY** — Don't repeat yourself, generalize reusable code
+- **SOLID** — Follow SOLID principles for maintainable architecture
+- **Separation of Concerns** — Clear separation between UI, business logic, and data layers

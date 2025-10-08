@@ -1,0 +1,390 @@
+---
+globs: *_test.dart,test/**/*.dart
+description: Testing patterns, unit tests, widget tests, and integration test guidelines
+---
+
+# Testing Patterns & Guidelines
+
+This project follows comprehensive testing strategies for Flutter apps with unit tests, widget tests, and integration tests.
+
+## 🧪 Test Structure
+
+### Test Directory Organization
+```
+test/
+├── unit/                  # Unit tests for business logic
+│   ├── controllers/       # Controller tests
+│   ├── repositories/      # Repository tests
+│   ├── usecases/          # Use case tests
+│   └── utils/             # Utility function tests
+├── widget/                # Widget tests
+│   ├── pages/             # Page widget tests
+│   └── components/        # Component widget tests
+├── integration/           # Integration tests
+└── mocks/                 # Mock objects and test data
+```
+
+## 🔧 Unit Testing Patterns
+
+### Controller Testing
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+
+import 'package:book_app/presentation/controllers/book_controller.dart';
+import 'package:book_app/domain/repositories/book_repository.dart';
+import 'package:book_app/domain/entities/book.dart';
+
+@GenerateMocks([BookRepository])
+void main() {
+  late BookController controller;
+  late MockBookRepository mockRepository;
+  
+  setUp(() {
+    mockRepository = MockBookRepository();
+    Get.put<BookRepository>(mockRepository);
+    controller = BookController();
+  });
+  
+  tearDown(() {
+    Get.reset();
+  });
+  
+  group('BookController', () {
+    test('should load books successfully', () async {
+      // Arrange
+      final books = [
+        Book(id: '1', title: 'Test Book', author: 'Test Author'),
+      ];
+      when(mockRepository.getBooks()).thenAnswer((_) async => books);
+      
+      // Act
+      await controller.loadBooks();
+      
+      // Assert
+      expect(controller.books.length, equals(1));
+      expect(controller.isLoading.value, isFalse);
+      expect(controller.errorMessage.value, isEmpty);
+    });
+    
+    test('should handle error when loading books fails', () async {
+      // Arrange
+      when(mockRepository.getBooks()).thenThrow(Exception('Network error'));
+      
+      // Act
+      await controller.loadBooks();
+      
+      // Assert
+      expect(controller.books.isEmpty, isTrue);
+      expect(controller.isLoading.value, isFalse);
+      expect(controller.errorMessage.value, isNotEmpty);
+    });
+  });
+}
+```
+
+### Repository Testing
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+
+import 'package:book_app/data/repositories/book_repository_impl.dart';
+import 'package:book_app/data/datasources/book_remote_datasource.dart';
+import 'package:book_app/data/datasources/book_local_datasource.dart';
+
+@GenerateMocks([BookRemoteDataSource, BookLocalDataSource])
+void main() {
+  late BookRepositoryImpl repository;
+  late MockBookRemoteDataSource mockRemoteDataSource;
+  late MockBookLocalDataSource mockLocalDataSource;
+  
+  setUp(() {
+    mockRemoteDataSource = MockBookRemoteDataSource();
+    mockLocalDataSource = MockBookLocalDataSource();
+    repository = BookRepositoryImpl(
+      remoteDataSource: mockRemoteDataSource,
+      localDataSource: mockLocalDataSource,
+    );
+  });
+  
+  group('BookRepositoryImpl', () {
+    test('should return books from remote data source', () async {
+      // Arrange
+      final bookModels = [BookModel(id: '1', title: 'Test Book')];
+      when(mockRemoteDataSource.getBooks()).thenAnswer((_) async => bookModels);
+      
+      // Act
+      final result = await repository.getBooks();
+      
+      // Assert
+      expect(result.length, equals(1));
+      expect(result.first.title, equals('Test Book'));
+      verify(mockRemoteDataSource.getBooks()).called(1);
+    });
+    
+    test('should fallback to local data source when remote fails', () async {
+      // Arrange
+      final bookModels = [BookModel(id: '1', title: 'Cached Book')];
+      when(mockRemoteDataSource.getBooks()).thenThrow(Exception());
+      when(mockLocalDataSource.getCachedBooks()).thenAnswer((_) async => bookModels);
+      
+      // Act
+      final result = await repository.getBooks();
+      
+      // Assert
+      expect(result.length, equals(1));
+      expect(result.first.title, equals('Cached Book'));
+      verify(mockLocalDataSource.getCachedBooks()).called(1);
+    });
+  });
+}
+```
+
+## 🎨 Widget Testing Patterns
+
+### Page Widget Testing
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:mockito/mockito.dart';
+
+import 'package:book_app/presentation/pages/book_list_page.dart';
+import 'package:book_app/presentation/controllers/book_controller.dart';
+import 'package:book_app/domain/entities/book.dart';
+
+void main() {
+  late MockBookController mockController;
+  
+  setUp(() {
+    mockController = MockBookController();
+    Get.put<BookController>(mockController);
+  });
+  
+  tearDown(() {
+    Get.reset();
+  });
+  
+  group('BookListPage', () {
+    testWidgets('should display loading indicator when loading', (tester) async {
+      // Arrange
+      when(mockController.isLoading).thenReturn(true.obs);
+      when(mockController.books).thenReturn(<Book>[].obs);
+      
+      // Act
+      await tester.pumpWidget(GetMaterialApp(home: BookListPage()));
+      
+      // Assert
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+    
+    testWidgets('should display books when loaded', (tester) async {
+      // Arrange
+      final books = [
+        Book(id: '1', title: 'Test Book 1', author: 'Author 1'),
+        Book(id: '2', title: 'Test Book 2', author: 'Author 2'),
+      ];
+      when(mockController.isLoading).thenReturn(false.obs);
+      when(mockController.books).thenReturn(books.obs);
+      
+      // Act
+      await tester.pumpWidget(GetMaterialApp(home: BookListPage()));
+      
+      // Assert
+      expect(find.text('Test Book 1'), findsOneWidget);
+      expect(find.text('Test Book 2'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+    
+    testWidgets('should display error message when error occurs', (tester) async {
+      // Arrange
+      when(mockController.isLoading).thenReturn(false.obs);
+      when(mockController.books).thenReturn(<Book>[].obs);
+      when(mockController.errorMessage).thenReturn('Network error'.obs);
+      
+      // Act
+      await tester.pumpWidget(GetMaterialApp(home: BookListPage()));
+      
+      // Assert
+      expect(find.text('Network error'), findsOneWidget);
+    });
+  });
+}
+```
+
+### Component Widget Testing
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:book_app/presentation/widgets/book_card.dart';
+import 'package:book_app/domain/entities/book.dart';
+
+void main() {
+  group('BookCard', () {
+    testWidgets('should display book information correctly', (tester) async {
+      // Arrange
+      final book = Book(
+        id: '1',
+        title: 'Test Book',
+        author: 'Test Author',
+        rating: 4.5,
+      );
+      
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BookCard(book: book),
+          ),
+        ),
+      );
+      
+      // Assert
+      expect(find.text('Test Book'), findsOneWidget);
+      expect(find.text('Test Author'), findsOneWidget);
+      expect(find.text('4.5'), findsOneWidget);
+    });
+    
+    testWidgets('should call onTap when tapped', (tester) async {
+      // Arrange
+      final book = Book(id: '1', title: 'Test Book', author: 'Test Author');
+      bool tapped = false;
+      
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BookCard(
+              book: book,
+              onTap: () => tapped = true,
+            ),
+          ),
+        ),
+      );
+      
+      await tester.tap(find.byType(InkWell));
+      
+      // Assert
+      expect(tapped, isTrue);
+    });
+  });
+}
+```
+
+## 🔗 Integration Testing
+
+### End-to-End Testing
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+
+import 'package:book_app/main.dart' as app;
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  
+  group('Book App Integration Tests', () {
+    testWidgets('should navigate from book list to book details', (tester) async {
+      // Start the app
+      app.main();
+      await tester.pumpAndSettle();
+      
+      // Wait for books to load
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+      
+      // Tap on first book
+      await tester.tap(find.byType(BookCard).first);
+      await tester.pumpAndSettle();
+      
+      // Verify navigation to book details
+      expect(find.byType(BookDetailsPage), findsOneWidget);
+    });
+    
+    testWidgets('should search for books', (tester) async {
+      // Start the app
+      app.main();
+      await tester.pumpAndSettle();
+      
+      // Tap search field
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      
+      // Enter search query
+      await tester.enterText(find.byType(TextField), 'flutter');
+      await tester.pumpAndSettle();
+      
+      // Verify search results
+      expect(find.text('flutter'), findsWidgets);
+    });
+  });
+}
+```
+
+## 🎭 Mock Data Patterns
+
+### Test Data Factory
+```dart
+class TestDataFactory {
+  static Book createBook({
+    String? id,
+    String? title,
+    String? author,
+    double? rating,
+  }) {
+    return Book(
+      id: id ?? 'test-id',
+      title: title ?? 'Test Book',
+      author: author ?? 'Test Author',
+      rating: rating ?? 4.0,
+    );
+  }
+  
+  static List<Book> createBookList({int count = 3}) {
+    return List.generate(
+      count,
+      (index) => createBook(
+        id: 'book-$index',
+        title: 'Test Book $index',
+        author: 'Test Author $index',
+      ),
+    );
+  }
+}
+```
+
+## 📊 Test Coverage Guidelines
+
+### Coverage Targets
+- **Unit Tests**: 80%+ coverage for business logic
+- **Widget Tests**: 70%+ coverage for UI components
+- **Integration Tests**: Critical user flows covered
+
+### Running Tests
+```bash
+# Run all tests
+flutter test
+
+# Run with coverage
+flutter test --coverage
+
+# Run specific test file
+flutter test test/unit/controllers/book_controller_test.dart
+
+# Run integration tests
+flutter test integration_test/
+```
+
+### Test Naming Conventions
+- **Unit Tests**: `{class_name}_test.dart`
+- **Widget Tests**: `{widget_name}_test.dart`
+- **Integration Tests**: `{feature}_integration_test.dart`
+
+### Test Method Naming
+- Use descriptive test names: `should_return_books_when_repository_succeeds`
+- Group related tests: `group('BookController', () { ... })`
+- Use `setUp()` and `tearDown()` for test preparation and cleanup

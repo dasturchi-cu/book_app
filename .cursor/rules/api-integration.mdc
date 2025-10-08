@@ -1,0 +1,260 @@
+---
+globs: *.dart
+description: API integration patterns, Dio HTTP client usage, and network error handling
+---
+
+# API Integration & Dio Patterns
+
+This project uses **Dio** for HTTP requests and follows patterns for API integration with mock data fallback.
+
+## 🌐 HTTP Client Setup
+
+### Dio Configuration
+```dart
+class ApiClient {
+  static final Dio _dio = Dio();
+  
+  static void initialize() {
+    _dio.options = BaseOptions(
+      baseUrl: 'https://api.example.com/v1',
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+    
+    // Add interceptors
+    _dio.interceptors.addAll([
+      AuthInterceptor(),
+      LogInterceptor(requestBody: true, responseBody: true),
+      ErrorInterceptor(),
+    ]);
+  }
+  
+  static Dio get instance => _dio;
+}
+```
+
+### Authentication Interceptor
+```dart
+class AuthInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final token = Get.find<AuthController>().token;
+    if (token != null) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+    handler.next(options);
+  }
+}
+```
+
+## 📡 API Service Patterns
+
+### Base API Service
+```dart
+abstract class BaseApiService {
+  final Dio _dio = ApiClient.instance;
+  
+  Future<T> get<T>(String path, {Map<String, dynamic>? queryParameters}) async {
+    try {
+      final response = await _dio.get(path, queryParameters: queryParameters);
+      return _handleResponse<T>(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+  
+  Future<T> post<T>(String path, {dynamic data}) async {
+    try {
+      final response = await _dio.post(path, data: data);
+      return _handleResponse<T>(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+  
+  T _handleResponse<T>(Response response) {
+    if (response.statusCode == 200) {
+      return response.data as T;
+    }
+    throw ApiException('Invalid response: ${response.statusCode}');
+  }
+  
+  Exception _handleDioError(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+        return ApiException('Connection timeout');
+      case DioExceptionType.receiveTimeout:
+        return ApiException('Receive timeout');
+      case DioExceptionType.badResponse:
+        return ApiException('Server error: ${e.response?.statusCode}');
+      default:
+        return ApiException('Network error: ${e.message}');
+    }
+  }
+}
+```
+
+### Feature-Specific API Service
+```dart
+class BookApiService extends BaseApiService {
+  Future<List<BookModel>> getBooks() async {
+    final response = await get<List<dynamic>>('/books');
+    return response.map((json) => BookModel.fromJson(json)).toList();
+  }
+  
+  Future<BookModel> getBookById(String id) async {
+    final response = await get<Map<String, dynamic>>('/books/$id');
+    return BookModel.fromJson(response);
+  }
+  
+  Future<BookModel> createBook(BookModel book) async {
+    final response = await post<Map<String, dynamic>>('/books', data: book.toJson());
+    return BookModel.fromJson(response);
+  }
+}
+```
+
+## 🔄 Repository Pattern with API Integration
+
+### Repository Interface
+```dart
+abstract class BookRepository {
+  Future<List<Book>> getBooks();
+  Future<Book> getBookById(String id);
+  Future<Book> createBook(Book book);
+}
+```
+
+### Repository Implementation
+```dart
+class BookRepositoryImpl implements BookRepository {
+  final BookApiService _apiService;
+  final BookLocalDataSource _localDataSource;
+  
+  BookRepositoryImpl({
+    required BookApiService apiService,
+    required BookLocalDataSource localDataSource,
+  }) : _apiService = apiService, _localDataSource = localDataSource;
+  
+  @override
+  Future<List<Book>> getBooks() async {
+    try {
+      // Try API first
+      final bookModels = await _apiService.getBooks();
+      final books = bookModels.map((model) => model.toEntity()).toList();
+      
+      // Cache locally
+      await _localDataSource.cacheBooks(bookModels);
+      
+      return books;
+    } catch (e) {
+      // Fallback to local cache or mock data
+      final cachedBooks = await _localDataSource.getCachedBooks();
+      if (cachedBooks.isNotEmpty) {
+        return cachedBooks.map((model) => model.toEntity()).toList();
+      }
+      
+      // Final fallback to mock data
+      return await _getMockBooks();
+    }
+  }
+  
+  Future<List<Book>> _getMockBooks() async {
+    // Load from assets/mock/books.json
+    final jsonString = await rootBundle.loadString('assets/mock/books.json');
+    final List<dynamic> jsonList = json.decode(jsonString);
+    return jsonList.map((json) => BookModel.fromJson(json).toEntity()).toList();
+  }
+}
+```
+
+## 🚨 Error Handling Patterns
+
+### Custom Exceptions
+```dart
+class ApiException implements Exception {
+  final String message;
+  final int? statusCode;
+  
+  const ApiException(this.message, [this.statusCode]);
+  
+  @override
+  String toString() => 'ApiException: $message';
+}
+
+class NetworkException extends ApiException {
+  const NetworkException(super.message);
+}
+
+class ServerException extends ApiException {
+  const ServerException(super.message, super.statusCode);
+}
+```
+
+### Error Handling in Controllers
+```dart
+class BookController extends GetxController {
+  Future<void> loadBooks() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      
+      final books = await Get.find<BookRepository>().getBooks();
+      this.books.value = books;
+      
+    } on NetworkException catch (e) {
+      errorMessage.value = 'Network error: ${e.message}';
+      // Show offline indicator
+    } on ServerException catch (e) {
+      errorMessage.value = 'Server error: ${e.message}';
+    } catch (e) {
+      errorMessage.value = 'Unexpected error: $e';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}
+```
+
+## 📱 Mock Data Integration
+
+### Mock Data Service
+```dart
+class MockDataService {
+  static Future<List<BookModel>> getBooks() async {
+    final jsonString = await rootBundle.loadString('assets/mock/books.json');
+    final List<dynamic> jsonList = json.decode(jsonString);
+    return jsonList.map((json) => BookModel.fromJson(json)).toList();
+  }
+  
+  static Future<BookModel> getBookById(String id) async {
+    final books = await getBooks();
+    return books.firstWhere((book) => book.id == id);
+  }
+}
+```
+
+## 🔧 Environment Configuration
+
+### API Configuration
+```dart
+class ApiConfig {
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://api.example.com/v1',
+  );
+  
+  static const bool useMockData = bool.fromEnvironment(
+    'USE_MOCK_DATA',
+    defaultValue: true,
+  );
+  
+  static const Duration timeout = Duration(seconds: 30);
+}
+```
+
+This setup allows seamless switching between mock data and real API by changing environment variables or configuration flags.

@@ -1,0 +1,147 @@
+---
+alwaysApply: true
+description: Project structure, file organization, and folder naming conventions
+---
+
+# Project Structure & File Organization
+
+This project follows a structured approach to organizing Flutter code with clear separation of concerns.
+
+## 📁 Directory Structure
+
+The main project structure follows Clean Architecture principles:
+
+```
+lib/
+├── core/                    # Shared utilities and configurations
+│   ├── constants/          # App constants, API endpoints, keys
+│   ├── theme/              # App theme, colors, text styles
+│   ├── utils/              # Helper functions, extensions
+│   └── errors/             # Custom exceptions and error handling
+│
+├── data/                   # Data layer implementation
+│   ├── models/             # Data models (JSON serialization)
+│   ├── repositories/       # Repository implementations
+│   ├── datasources/        # Local and remote data sources
+│   └── mock/               # Mock data for development
+│
+├── domain/                 # Business logic layer
+│   ├── entities/           # Business entities (pure Dart classes)
+│   ├── repositories/       # Repository interfaces (contracts)
+│   └── usecases/           # Business use cases
+│
+├── presentation/           # UI layer
+│   ├── controllers/        # GetX controllers
+│   ├── pages/              # Screen widgets
+│   ├── widgets/            # Reusable UI components
+│   └── routes/             # App routing configuration
+│
+└── main.dart               # App entry point
+```
+
+## 📄 File Naming Conventions
+
+### Controllers
+- **Pattern**: `{feature}_controller.dart`
+- **Examples**: `book_controller.dart`, `user_controller.dart`, `auth_controller.dart`
+
+### Pages/Screens
+- **Pattern**: `{feature}_page.dart` or `{feature}_screen.dart`
+- **Examples**: `book_list_page.dart`, `book_details_page.dart`, `login_screen.dart`
+
+### Widgets
+- **Pattern**: `{widget_name}_widget.dart`
+- **Examples**: `book_card_widget.dart`, `search_bar_widget.dart`, `loading_indicator_widget.dart`
+
+### Models/Entities
+- **Pattern**: `{entity_name}.dart`
+- **Examples**: `book.dart`, `user.dart`, `category.dart`
+
+### Repositories
+- **Pattern**: `{entity}_repository.dart` (interface), `{entity}_repository_impl.dart` (implementation)
+- **Examples**: `book_repository.dart`, `book_repository_impl.dart`
+
+## 🎯 File Organization Rules
+
+### Import Order
+```dart
+// 1. Dart core libraries
+import 'dart:async';
+import 'dart:convert';
+
+// 2. Flutter framework
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+// 3. Third-party packages
+import 'package:get/get.dart';
+import 'package:dio/dio.dart';
+
+// 4. Local imports (relative paths)
+import '../domain/entities/book.dart';
+import '../data/repositories/book_repository.dart';
+import 'widgets/book_card_widget.dart';
+```
+
+### Asset Organization
+```
+assets/
+├── images/                 # App images, icons
+│   ├── books/             # Book-related images
+│   ├── icons/             # App icons
+│   └── backgrounds/       # Background images
+├── fonts/                 # Custom fonts
+└── mock/                  # Mock JSON data
+    ├── books.json
+    ├── users.json
+    └── categories.json
+```
+
+## 🔧 Configuration Files
+
+### Key Configuration Files
+- **[pubspec.yaml](mdc:pubspec.yaml)** — Dependencies and project metadata
+- **[analysis_options.yaml](mdc:analysis_options.yaml)** — Dart analyzer configuration
+- **[plan.md](mdc:plan.md)** — Project documentation and architecture overview
+
+### Platform-Specific
+- **Android**: `android/app/build.gradle.kts` — Android build configuration
+- **iOS**: `ios/Runner/Info.plist` — iOS app configuration
+- **Web**: `web/index.html` — Web app entry point
+
+## 📱 Feature-Based Organization
+
+For larger features, consider organizing by feature:
+
+```
+lib/features/
+├── authentication/
+│   ├── controllers/
+│   ├── pages/
+│   ├── widgets/
+│   └── models/
+├── books/
+│   ├── controllers/
+│   ├── pages/
+│   ├── widgets/
+│   └── models/
+└── profile/
+    ├── controllers/
+    ├── pages/
+    ├── widgets/
+    └── models/
+```
+
+## 🚀 Getting Started Files
+
+When creating new features, follow this template:
+
+1. **Entity** (`domain/entities/`)
+2. **Repository Interface** (`domain/repositories/`)
+3. **Model** (`data/models/`)
+4. **Repository Implementation** (`data/repositories/`)
+5. **Controller** (`presentation/controllers/`)
+6. **Page** (`presentation/pages/`)
+7. **Widgets** (`presentation/widgets/`)
+
+This ensures proper dependency flow and maintains clean architecture principles.

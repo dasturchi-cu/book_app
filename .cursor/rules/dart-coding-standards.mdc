@@ -1,0 +1,192 @@
+---
+globs: *.dart
+description: Dart coding standards, conventions, and best practices for Flutter development
+---
+
+# Dart Coding Standards & Conventions
+
+This project follows Dart/Flutter best practices and coding conventions.
+
+## 📝 Code Style
+
+### Naming Conventions
+- **Classes**: PascalCase (`BookController`, `UserRepository`)
+- **Variables/Functions**: camelCase (`bookTitle`, `getUserData()`)
+- **Constants**: camelCase (`const maxRetryCount = 3`)
+- **Private members**: underscore prefix (`_privateMethod()`, `_privateVariable`)
+- **Files**: snake_case (`book_controller.dart`, `user_repository.dart`)
+
+### File Organization
+```dart
+// 1. Imports (dart, flutter, packages, local)
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../domain/entities/book.dart';
+import '../data/repositories/book_repository.dart';
+
+// 2. Class definition
+class BookController extends GetxController {
+  // 3. Static variables
+  static const int maxBooksPerPage = 20;
+  
+  // 4. Instance variables
+  final RxList<Book> books = <Book>[].obs;
+  final RxBool isLoading = false.obs;
+  
+  // 5. Constructor
+  BookController();
+  
+  // 6. Override methods
+  @override
+  void onInit() {
+    super.onInit();
+    loadBooks();
+  }
+  
+  // 7. Public methods
+  Future<void> loadBooks() async {
+    // Implementation
+  }
+  
+  // 8. Private methods
+  void _handleError(String error) {
+    // Implementation
+  }
+}
+```
+
+## 🎯 Best Practices
+
+### Null Safety
+- Always use null safety (`?`, `!`, `??`)
+- Use `late` for variables initialized after declaration
+- Use `required` for non-nullable parameters
+
+```dart
+class Book {
+  final String id;
+  final String title;
+  final String? description; // Nullable
+  final List<String> authors;
+  
+  const Book({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.authors,
+  });
+}
+```
+
+### Error Handling
+```dart
+// Use try-catch for async operations
+try {
+  final result = await repository.getBooks();
+  books.value = result;
+} on DioException catch (e) {
+  errorMessage.value = 'Network error: ${e.message}';
+} catch (e) {
+  errorMessage.value = 'Unexpected error: $e';
+}
+
+// Use Result pattern for better error handling
+sealed class Result<T> {
+  const Result();
+}
+
+class Success<T> extends Result<T> {
+  final T data;
+  const Success(this.data);
+}
+
+class Failure<T> extends Result<T> {
+  final String error;
+  const Failure(this.error);
+}
+```
+
+### Widget Composition
+```dart
+// Prefer composition over inheritance
+class BookCard extends StatelessWidget {
+  final Book book;
+  final VoidCallback? onTap;
+  
+  const BookCard({
+    super.key,
+    required this.book,
+    this.onTap,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(book.title, style: Theme.of(context).textTheme.titleMedium),
+              if (book.description != null)
+                Text(book.description!, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+## 🔧 Performance Guidelines
+
+### Widget Optimization
+- Use `const` constructors when possible
+- Use `ListView.builder` for large lists
+- Use `RepaintBoundary` for expensive widgets
+- Avoid `setState` in `build` method
+
+### Memory Management
+- Dispose controllers properly in `onClose()`
+- Cancel streams and timers
+- Use `WeakReference` for circular references
+
+## 📚 Documentation
+```dart
+/// A controller that manages book-related state and operations.
+/// 
+/// This controller handles:
+/// - Loading books from repository
+/// - Managing book list state
+/// - Handling user interactions
+class BookController extends GetxController {
+  /// Loads all available books from the repository.
+  /// 
+  /// Throws [Exception] if the operation fails.
+  Future<void> loadBooks() async {
+    // Implementation
+  }
+}
+```
+
+## 🧪 Testing Patterns
+```dart
+// Use descriptive test names
+test('should load books successfully when repository returns data', () async {
+  // Arrange
+  final mockRepository = MockBookRepository();
+  when(mockRepository.getBooks()).thenAnswer((_) async => [testBook]);
+  
+  // Act
+  final controller = BookController();
+  await controller.loadBooks();
+  
+  // Assert
+  expect(controller.books.length, equals(1));
+  expect(controller.isLoading.value, isFalse);
+});
+```

@@ -1,0 +1,423 @@
+---
+globs: *.dart
+description: Flutter UI/UX patterns, Material Design guidelines, and responsive design principles
+---
+
+# Flutter UI/UX Patterns & Material Design
+
+This project follows Material Design principles and Flutter UI best practices for a modern, accessible book reading app.
+
+## 🎨 Material Design Guidelines
+
+### Color Scheme
+```dart
+class AppColors {
+  // Primary colors
+  static const Color primary = Color(0xFF1976D2);
+  static const Color primaryVariant = Color(0xFF1565C0);
+  static const Color secondary = Color(0xFF03DAC6);
+  
+  // Surface colors
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFFF5F5F5);
+  
+  // Text colors
+  static const Color onPrimary = Color(0xFFFFFFFF);
+  static const Color onSurface = Color(0xFF212121);
+  static const Color onBackground = Color(0xFF212121);
+  
+  // State colors
+  static const Color error = Color(0xFFB00020);
+  static const Color success = Color(0xFF4CAF50);
+  static const Color warning = Color(0xFFFF9800);
+}
+```
+
+### Typography Scale
+```dart
+class AppTextStyles {
+  static const TextStyle headline1 = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.bold,
+    letterSpacing: -0.5,
+  );
+  
+  static const TextStyle headline2 = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0,
+  );
+  
+  static const TextStyle bodyLarge = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    letterSpacing: 0.15,
+  );
+  
+  static const TextStyle bodyMedium = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    letterSpacing: 0.25,
+  );
+  
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.normal,
+    letterSpacing: 0.4,
+  );
+}
+```
+
+## 📱 Responsive Design Patterns
+
+### Screen Size Breakpoints
+```dart
+class Breakpoints {
+  static const double mobile = 600;
+  static const double tablet = 900;
+  static const double desktop = 1200;
+}
+
+class ResponsiveHelper {
+  static bool isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < Breakpoints.mobile;
+  
+  static bool isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.width >= Breakpoints.mobile &&
+      MediaQuery.of(context).size.width < Breakpoints.tablet;
+  
+  static bool isDesktop(BuildContext context) =>
+      MediaQuery.of(context).size.width >= Breakpoints.tablet;
+}
+```
+
+### Responsive Layout Widget
+```dart
+class ResponsiveLayout extends StatelessWidget {
+  final Widget mobile;
+  final Widget? tablet;
+  final Widget? desktop;
+  
+  const ResponsiveLayout({
+    super.key,
+    required this.mobile,
+    this.tablet,
+    this.desktop,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= Breakpoints.tablet) {
+          return desktop ?? tablet ?? mobile;
+        } else if (constraints.maxWidth >= Breakpoints.mobile) {
+          return tablet ?? mobile;
+        } else {
+          return mobile;
+        }
+      },
+    );
+  }
+}
+```
+
+## 🧩 Reusable UI Components
+
+### Book Card Widget
+```dart
+class BookCard extends StatelessWidget {
+  final Book book;
+  final VoidCallback? onTap;
+  final VoidCallback? onFavorite;
+  
+  const BookCard({
+    super.key,
+    required this.book,
+    this.onTap,
+    this.onFavorite,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      book.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onFavorite,
+                    icon: Icon(
+                      book.isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: book.isFavorite ? Colors.red : null,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                book.author,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.star, size: 16, color: Colors.amber),
+                  const SizedBox(width: 4),
+                  Text(
+                    book.rating.toString(),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Loading States
+```dart
+class LoadingIndicator extends StatelessWidget {
+  final String? message;
+  
+  const LoadingIndicator({super.key, this.message});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          if (message != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              message!,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class ErrorWidget extends StatelessWidget {
+  final String message;
+  final VoidCallback? onRetry;
+  
+  const ErrorWidget({
+    super.key,
+    required this.message,
+    this.onRetry,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: Theme.of(context).textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: onRetry,
+              child: const Text('Retry'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+```
+
+## 📖 Reading Experience Components
+
+### Book Reader Widget
+```dart
+class BookReader extends StatefulWidget {
+  final Book book;
+  
+  const BookReader({super.key, required this.book});
+  
+  @override
+  State<BookReader> createState() => _BookReaderState();
+}
+
+class _BookReaderState extends State<BookReader> {
+  bool _isDarkMode = false;
+  double _fontSize = 16.0;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.book.title),
+        actions: [
+          IconButton(
+            onPressed: () => setState(() => _isDarkMode = !_isDarkMode),
+            icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode),
+          ),
+          PopupMenuButton<double>(
+            onSelected: (size) => setState(() => _fontSize = size),
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 14.0, child: Text('Small')),
+              const PopupMenuItem(value: 16.0, child: Text('Medium')),
+              const PopupMenuItem(value: 18.0, child: Text('Large')),
+              const PopupMenuItem(value: 20.0, child: Text('Extra Large')),
+            ],
+            child: const Icon(Icons.text_fields),
+          ),
+        ],
+      ),
+      body: Container(
+        color: _isDarkMode ? Colors.grey[900] : Colors.white,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            widget.book.content,
+            style: TextStyle(
+              fontSize: _fontSize,
+              color: _isDarkMode ? Colors.white : Colors.black,
+              height: 1.6,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+## 🎯 Accessibility Guidelines
+
+### Semantic Labels
+```dart
+class AccessibleButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final Widget child;
+  
+  const AccessibleButton({
+    super.key,
+    required this.label,
+    required this.child,
+    this.onPressed,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: label,
+      button: true,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        child: child,
+      ),
+    );
+  }
+}
+```
+
+### Screen Reader Support
+```dart
+class BookListTile extends StatelessWidget {
+  final Book book;
+  final VoidCallback? onTap;
+  
+  const BookListTile({
+    super.key,
+    required this.book,
+    this.onTap,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '${book.title} by ${book.author}, rating ${book.rating} stars',
+      hint: 'Double tap to open book details',
+      child: ListTile(
+        title: Text(book.title),
+        subtitle: Text(book.author),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.star, color: Colors.amber),
+            Text(book.rating.toString()),
+          ],
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+```
+
+## 🌙 Theme Configuration
+```dart
+class AppTheme {
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        brightness: Brightness.light,
+      ),
+      textTheme: const TextTheme(
+        headlineLarge: AppTextStyles.headline1,
+        headlineMedium: AppTextStyles.headline2,
+        bodyLarge: AppTextStyles.bodyLarge,
+        bodyMedium: AppTextStyles.bodyMedium,
+        bodySmall: AppTextStyles.caption,
+      ),
+    );
+  }
+  
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        brightness: Brightness.dark,
+      ),
+    );
+  }
+}
+```

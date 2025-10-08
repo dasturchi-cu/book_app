@@ -1,0 +1,71 @@
+# 🧠 Flutter Project Cursor AI Rules
+# Bu fayl AI kod yozishda qat'iy tartib va tamoyillarni belgilaydi.
+
+# ==========================
+# ✅ Umumiy tamoyillar
+# ==========================
+general:
+  - "Always follow KISS (Keep It Simple), DRY (Don't Repeat Yourself), and SOLID principles."
+  - "Do not write overly complicated code; prefer readability and maintainability."
+  - "Never leave TODO comments without explanation. Use // TODO: [task description]"
+  - "Always add DartDoc comments (///) for classes, functions, and public methods."
+  - "Do not hardcode strings inside widgets; store them in constants or localization files."
+
+# ==========================
+# 📁 Arxitektura Qoidalari
+# ==========================
+architecture:
+  - "Follow Clean Architecture structure: core/, data/, domain/, presentation/, services/."
+  - "Do not mix UI logic with business logic — keep controllers (ViewModels) separate."
+  - "Models go into data/models/, Entities go into domain/entities/, UI goes into presentation/."
+  - "Services like API clients must be placed under services/ and use Dio."
+  - "Never directly call API inside UI widgets; use repositories and usecases."
+
+# ==========================
+# 🌐 Mock Data Qoidalari
+# ==========================
+mock:
+  - "Use mock data stored in data/mock/ during development."
+  - "Repositories must initially return mock data, but should be structured to easily switch to real API."
+  - "Mock data must be defined as Dart lists or JSON maps, not random variables inside widgets."
+
+# ==========================
+# 📝 Kod yozish uslubi
+# ==========================
+style:
+  - "Use lowerCamelCase for variables and functions."
+  - "Use UpperCamelCase for classes and enums."
+  - "Use descriptive, meaningful names (avoid a, b, x, temp)."
+  - "Avoid unnecessary comments for obvious code. Use comments for complex logic."
+  - "Use extension methods for repeated widget patterns and helpers."
+
+# ==========================
+# 🧠 GetX yoki State Management
+# ==========================
+state_management:
+  - "Use GetX for state management."
+  - "Each page must have its own controller placed in presentation/controllers/."
+  - "Do not use setState or StatefulWidgets unless absolutely necessary."
+  - "Use reactive variables (.obs) for state, and Get.put/Get.find for dependency injection."
+
+# ==========================
+# 📄 Test & Documentation
+# ==========================
+testing:
+  - "Ensure that each usecase and repository can be unit tested."
+  - "Do not write UI tests that depend on real API calls."
+  - "Use mock data for testing environments."
+
+documentation:
+  - "Each new file must start with a header comment describing its purpose."
+  - "Controllers and Repositories must include brief usage examples in comments."
+
+# ==========================
+# 🚫 Nima qilish mumkin emas
+# ==========================
+anti_patterns:
+  - "Do not write all code inside main.dart."
+  - "Do not directly use setState in large projects."
+  - "Do not use business logic directly inside widgets."
+  - "Avoid deeply nested widgets; break them into smaller components."
+  - "Do not import presentation layer into domain/data layers (only one-way dependency)."

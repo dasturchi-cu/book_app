@@ -1,0 +1,124 @@
+---
+globs: *.dart
+description: GetX state management patterns and reactive programming guidelines
+---
+
+# GetX State Management Patterns
+
+This project uses **GetX** for state management, routing, and dependency injection.
+
+## 🎮 Controller Patterns
+
+### Basic Controller Structure
+```dart
+class BookController extends GetxController {
+  // Reactive variables
+  final RxList<Book> books = <Book>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxString errorMessage = ''.obs;
+  
+  // Computed properties
+  List<Book> get filteredBooks => books.where((book) => book.isFavorite).toList();
+  
+  @override
+  void onInit() {
+    super.onInit();
+    loadBooks();
+  }
+  
+  @override
+  void onClose() {
+    // Cleanup resources
+    super.onClose();
+  }
+}
+```
+
+### State Management Rules
+- **Use `.obs`** for reactive variables that need UI updates
+- **Use `Rx<T>`** for explicit reactive types
+- **Use `Get.find<T>()`** to access controllers from other controllers
+- **Use `Get.put<T>()`** for immediate initialization
+- **Use `Get.lazyPut<T>()`** for lazy initialization
+
+### Navigation Patterns
+```dart
+// Navigate to page
+Get.to(() => BookDetailsPage(book: book));
+
+// Navigate with replacement
+Get.off(() => HomePage());
+
+// Navigate and clear stack
+Get.offAll(() => LoginPage());
+
+// Navigate with arguments
+Get.toNamed('/book-details', arguments: {'bookId': book.id});
+
+// Get arguments
+final args = Get.arguments as Map<String, dynamic>;
+```
+
+### Dependency Injection
+```dart
+// In main.dart or app initialization
+Get.put<BookRepository>(BookRepositoryImpl());
+Get.lazyPut<BookController>(() => BookController());
+
+// In widgets
+final controller = Get.find<BookController>();
+```
+
+## 🔄 Reactive Programming
+
+### Observable Variables
+- Use `RxList<T>` for lists that need UI updates
+- Use `RxBool` for boolean states (loading, error states)
+- Use `RxString` for text that changes
+- Use `RxInt` for counters and numeric values
+
+### UI Binding
+```dart
+// In widgets
+Obx(() => Text(controller.errorMessage.value))
+
+// Or use GetBuilder for non-reactive updates
+GetBuilder<BookController>(
+  builder: (controller) => Text(controller.staticValue),
+)
+```
+
+## 📱 Page Structure
+```dart
+class BookListPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GetBuilder<BookController>(
+      init: BookController(),
+      builder: (controller) => Scaffold(
+        body: Obx(() => controller.isLoading.value
+          ? CircularProgressIndicator()
+          : ListView.builder(
+              itemCount: controller.books.length,
+              itemBuilder: (context, index) => BookTile(controller.books[index]),
+            ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+## 🚨 Error Handling
+```dart
+// In controllers
+try {
+  isLoading.value = true;
+  final result = await repository.getBooks();
+  books.value = result;
+} catch (e) {
+  errorMessage.value = e.toString();
+} finally {
+  isLoading.value = false;
+}
+```

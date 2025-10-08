@@ -1,0 +1,33 @@
+[
+  {
+    "id": "institute",
+    "name": "Institut adabiyotlari",
+    "description": "Institut uchun maxsus adabiyotlar",
+    "icon": "school",
+    "isInstitute": true,
+    "subcategories": [
+      "Qonunchilik",
+      "Jinoyat huquqi",
+      "Ma'muriy huquq",
+      "Axborot xavfsizligi",
+      "Kriminalistika",
+      "Psixologiya",
+      "Huquqni muhofaza qilish faoliyati"
+    ]
+  },
+  {
+    "id": "general",
+    "name": "Umumiy adabiyotlar",
+    "description": "Umumiy o'qish uchun adabiyotlar",
+    "icon": "book",
+    "isInstitute": false,
+    "subcategories": [
+      "Badiiy adabiyotlar",
+      "Shaxsiy rivojlanish",
+      "Biznes va menejment",
+      "Tarixiy asarlar",
+      "Fan-texnika",
+      "Motivatsion kitoblar"
+    ]
+  }
+]
