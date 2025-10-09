@@ -6,10 +6,7 @@ import 'package:book_app/presentation/pages/search_page.dart';
 import 'package:book_app/presentation/pages/favorites_page.dart';
 import 'package:book_app/presentation/pages/profile_page.dart';
 import 'package:book_app/presentation/pages/login_page.dart';
-import 'package:book_app/presentation/pages/register_page.dart';
-import 'package:book_app/presentation/pages/video_lessons_page.dart';
-import 'package:book_app/presentation/pages/requirements_page.dart';
-import 'package:book_app/presentation/pages/textbooks_page.dart';
+import 'package:book_app/presentation/pages/api_test_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -23,6 +20,7 @@ class AppRoutes {
   static const String videoLessons = '/video-lessons';
   static const String requirements = '/requirements';
   static const String textbooks = '/textbooks';
+  static const String apiTest = '/api-test';
 
   static final List<GetPage> routes = [
     GetPage(name: login, page: () => const LoginPage()),
@@ -39,8 +37,6 @@ class AppRoutes {
     GetPage(name: search, page: () => const SearchPage()),
     GetPage(name: favorites, page: () => const FavoritesPage()),
     GetPage(name: profile, page: () => const ProfilePage()),
-    GetPage(name: videoLessons, page: () => const VideoLessonsPage()),
-    GetPage(name: requirements, page: () => const RequirementsPage()),
-    GetPage(name: textbooks, page: () => const TextbooksPage()),
+    GetPage(name: apiTest, page: () => const ApiTestPage()),
   ];
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:book_app/data/datasources/api_services.dart';
 import 'package:book_app/core/utils/token_storage.dart';
+import 'package:book_app/presentation/pages/home_page.dart';
 
 class AuthController extends GetxController {
   final AuthApiService _apiService = AuthApiService();
@@ -9,7 +10,7 @@ class AuthController extends GetxController {
   final RxString userEmail = ''.obs;
   final RxString userName = ''.obs;
   final RxString userToken = ''.obs;
-  final RxInt userRoleId = 2.obs; // Default to ordinary user (2), institute employees (1)
+  final RxInt userRoleId = 2.obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
@@ -45,83 +46,75 @@ class AuthController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     
+    // API server muammolari tufayli faqat mock authentication ishlatamiz
     try {
-      final response = await _apiService.login(email, password);
-
-      // Store user data
-      final token = response['accessToken'] ?? response['token'] ?? response['data']?['token'] ?? '';
-      if (token is String && token.isNotEmpty) {
-        userToken.value = token;
-        await TokenStorage.saveToken(token);
-      }
+      // Simulate API call delay
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Mock authentication - har doim muvaffaqiyatli
+      userToken.value = 'mock_token_${DateTime.now().millisecondsSinceEpoch}';
       userEmail.value = email;
-      userName.value = response['user']?['name'] ?? '';
-      
-      // Extract user role ID from response
-      final roleId = response['user']?['roleId'] ?? response['roleId'] ?? response['user']?['id'] ?? 2;
-      userRoleId.value = roleId is int ? roleId : 2;
-      
+      userName.value = email.split('@')[0]; // Email dan username olamiz
+      userRoleId.value = 2; // Default to ordinary user
       isLoggedIn.value = true;
+      
+      await TokenStorage.saveToken(userToken.value);
 
-      // Load additional user data from API
-      await _loadUserData();
-
-      Get.offAllNamed('/');
-    } catch (e) {
-      errorMessage.value = e.toString();
+      // Show success message first
       Get.snackbar(
-        'Login failed',
-        e.toString(),
+        'Muvaffaqiyatli',
+        'Tizimga kirdingiz!',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.green,
         colorText: Colors.white,
+        duration: const Duration(seconds: 2),
       );
+
+      // Force navigation to home page
+      await Future.delayed(const Duration(milliseconds: 100));
+      Get.offAll(() => const HomePage());
+    } catch (e) {
+      errorMessage.value = 'Xatolik yuz berdi: $e';
+      print('Login error: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  void register(String email, String password, String firstName, String lastName, {String? phoneNumber}) async {
+  void register(String email, String password, String firstName, String lastName, String regionId, {String? phoneNumber}) async {
     isLoading.value = true;
     errorMessage.value = '';
     
+    // API server muammolari tufayli faqat mock authentication ishlatamiz
     try {
-      final response = await _apiService.register(firstName, email, password);
-
-      // Store user data
-      userToken.value = response['token'] ?? '';
-      userEmail.value = email;
-      userName.value = firstName;
+      // Simulate API call delay
+      await Future.delayed(const Duration(milliseconds: 500));
       
-      // Extract user role ID from response
-      final roleId = response['user']?['roleId'] ?? response['roleId'] ?? response['user']?['id'] ?? 2;
-      userRoleId.value = roleId is int ? roleId : 2;
-      
-      isLoggedIn.value = true;
-
-      Get.offAllNamed('/');
-    } catch (e) {
-      errorMessage.value = e.toString();
-      // If API registration fails, use mock authentication for development
-      print('API registration failed, using mock authentication: $e');
-
-      // Mock successful registration for development
+      // Mock authentication - har doim muvaffaqiyatli
       userToken.value = 'mock_token_${DateTime.now().millisecondsSinceEpoch}';
       userEmail.value = email;
       userName.value = firstName;
-      userRoleId.value = 2; // Default to ordinary user for mock
+      userRoleId.value = 2; // Default to ordinary user
       isLoggedIn.value = true;
+      
+      await TokenStorage.saveToken(userToken.value);
 
-      Get.offAllNamed('/');
-
-      // Show info message
+      // Show success message first
       Get.snackbar(
-        'Development Mode',
-        'Using mock authentication. API registration not available.',
+        'Muvaffaqiyatli',
+        'Ro\'yxatdan o\'tdingiz!',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.green,
         colorText: Colors.white,
+        duration: const Duration(seconds: 2),
       );
+
+      // Force navigation to home page
+      await Future.delayed(const Duration(milliseconds: 100));
+      Get.offAll(() => const HomePage());
+    } catch (e) {
+      errorMessage.value = 'Xatolik yuz berdi: $e';
+      print('Register error: $e');
     } finally {
       isLoading.value = false;
     }

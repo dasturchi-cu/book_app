@@ -9,6 +9,7 @@ import 'package:book_app/core/utils/token_storage.dart';
 import 'package:book_app/presentation/controllers/category_controller.dart';
 import 'package:book_app/presentation/controllers/book_controller.dart';
 import 'package:book_app/presentation/controllers/auth_controller.dart';
+import 'package:book_app/presentation/controllers/region_controller.dart';
 import 'package:book_app/data/repositories/book_repository_impl.dart';
 import 'package:book_app/data/repositories/saved_book_repository_impl.dart';
 import 'package:book_app/data/repositories/borrowing_repository_impl.dart';
@@ -17,6 +18,23 @@ import 'package:book_app/domain/repositories/book_repository.dart';
 import 'package:book_app/domain/repositories/saved_book_repository.dart';
 import 'package:book_app/domain/repositories/borrowing_repository.dart';
 import 'package:book_app/domain/repositories/rating_repository.dart';
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final authController = Get.find<AuthController>();
+    
+    return Obx(() {
+      if (authController.isLoggedIn.value) {
+        return const HomePage();
+      } else {
+        return const LoginPage();
+      }
+    });
+  }
+}
 
 void main() {
   runApp(const BookApp());
@@ -30,20 +48,14 @@ class BookApp extends StatelessWidget {
     // Initialize dependencies
     _initializeDependencies();
 
-    return FutureBuilder<String?>(
-      future: TokenStorage.getToken(),
-      builder: (context, snapshot) {
-        final hasToken = (snapshot.data != null && snapshot.data!.isNotEmpty);
-        return GetMaterialApp(
-          title: 'IIV MOI Books',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.system,
-          home: hasToken ? const HomePage() : const LoginPage(),
-          getPages: AppRoutes.routes,
-          debugShowCheckedModeBanner: false,
-        );
-      },
+    return GetMaterialApp(
+      title: 'IIV MOI Books',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      home: const AuthWrapper(),
+      getPages: AppRoutes.routes,
+      debugShowCheckedModeBanner: false,
     );
   }
 
@@ -63,5 +75,6 @@ class BookApp extends StatelessWidget {
     // Register commonly used controllers once
     Get.put<CategoryController>(CategoryController(), permanent: true);
     Get.put<BookController>(BookController(), permanent: true);
+    Get.put<RegionController>(RegionController(), permanent: true);
   }
 }

@@ -1,36 +1,29 @@
 class Author {
   final String id;
-  final String name;
-  final String? biography;
-  final String? profileImageUrl;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
+  final String firstName;
+  final String lastName;
+  final String? middleName;
+  final String? about;
+  final String? country;
+  final String? city;
+  final String? imagePath;
 
   const Author({
     required this.id,
-    required this.name,
-    this.biography,
-    this.profileImageUrl,
-    required this.createdAt,
-    this.updatedAt,
+    required this.firstName,
+    required this.lastName,
+    this.middleName,
+    this.about,
+    this.country,
+    this.city,
+    this.imagePath,
   });
 
-  Author copyWith({
-    String? id,
-    String? name,
-    String? biography,
-    String? profileImageUrl,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return Author(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      biography: biography ?? this.biography,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
+  String get fullName {
+    if (middleName != null && middleName!.isNotEmpty) {
+      return '$firstName $middleName $lastName';
+    }
+    return '$firstName $lastName';
   }
 
   @override
@@ -43,7 +36,5 @@ class Author {
   int get hashCode => id.hashCode;
 
   @override
-  String toString() {
-    return 'Author(id: $id, name: $name)';
-  }
+  String toString() => 'Author(id: $id, name: $fullName)';
 }

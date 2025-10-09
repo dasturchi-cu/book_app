@@ -20,6 +20,7 @@ class RegisterRequest {
   final String password;
   final String firstName;
   final String lastName;
+  final String regionId;
   final String? phoneNumber;
 
   const RegisterRequest({
@@ -27,6 +28,7 @@ class RegisterRequest {
     required this.password,
     required this.firstName,
     required this.lastName,
+    required this.regionId,
     this.phoneNumber,
   });
 
@@ -36,6 +38,7 @@ class RegisterRequest {
       'password': password,
       'firstName': firstName,
       'lastName': lastName,
+      'regionId': regionId,
       'phoneNumber': phoneNumber,
     };
   }

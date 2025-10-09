@@ -6,6 +6,7 @@ import 'package:book_app/presentation/controllers/auth_controller.dart';
 import 'package:book_app/presentation/widgets/category_card.dart';
 import 'package:book_app/presentation/widgets/book_card.dart';
 import 'package:book_app/presentation/widgets/bottom_navigation_widget.dart';
+import 'package:book_app/presentation/widgets/app_drawer.dart';
 import 'package:book_app/presentation/routes/app_routes.dart';
 import 'package:book_app/core/theme/app_colors.dart';
 import 'package:book_app/core/theme/app_text_styles.dart';
@@ -18,23 +19,41 @@ class HomePage extends StatelessWidget {
     return GetBuilder<CategoryController>(
       builder: (categoryController) => Scaffold(
         backgroundColor: AppColors.surface,
+        drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
             children: [
-              // Header with IIV MOI Logo
+              // Header with Menu Button and IIV MOI Logo
               Container(
                 padding: const EdgeInsets.all(20),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'IIV MOI',
-                      style: AppTextStyles.headline1.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 3,
+                    // Hamburger Menu Button
+                    Builder(
+                      builder: (context) => IconButton(
+                        onPressed: () => Scaffold.of(context).openDrawer(),
+                        icon: const Icon(
+                          Icons.menu,
+                          color: AppColors.primary,
+                          size: 28,
+                        ),
                       ),
                     ),
+                    // Logo
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'IIV MOI',
+                          style: AppTextStyles.headline1.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 3,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Placeholder for symmetry
+                    const SizedBox(width: 48),
                   ],
                 ),
               ),
@@ -225,6 +244,11 @@ class HomePage extends StatelessWidget {
           ),
         ),
         bottomNavigationBar: const BottomNavigationWidget(currentIndex: 0),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => Get.toNamed(AppRoutes.apiTest),
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.api, color: Colors.white),
+        ),
       ),
     );
   }

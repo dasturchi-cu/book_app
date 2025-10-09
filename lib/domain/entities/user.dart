@@ -3,6 +3,7 @@ class User {
   final String email;
   final String firstName;
   final String lastName;
+  final String regionId;
   final String? phoneNumber;
   final String? profileImageUrl;
   final DateTime createdAt;
@@ -13,6 +14,7 @@ class User {
     required this.email,
     required this.firstName,
     required this.lastName,
+    required this.regionId,
     this.phoneNumber,
     this.profileImageUrl,
     required this.createdAt,
@@ -26,6 +28,7 @@ class User {
     String? email,
     String? firstName,
     String? lastName,
+    String? regionId,
     String? phoneNumber,
     String? profileImageUrl,
     DateTime? createdAt,
@@ -36,6 +39,7 @@ class User {
       email: email ?? this.email,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
+      regionId: regionId ?? this.regionId,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       createdAt: createdAt ?? this.createdAt,

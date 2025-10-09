@@ -1,40 +1,32 @@
 class Borrowing {
   final String id;
-  final String bookId;
   final String userId;
-  final DateTime borrowedAt;
-  final DateTime? returnedAt;
+  final String bookId;
+  final DateTime borrowDate;
   final DateTime dueDate;
+  final DateTime? returnedDate;
+  final String? officerOrderCode;
   final bool isReturned;
 
   const Borrowing({
     required this.id,
-    required this.bookId,
     required this.userId,
-    required this.borrowedAt,
-    this.returnedAt,
+    required this.bookId,
+    required this.borrowDate,
     required this.dueDate,
+    this.returnedDate,
+    this.officerOrderCode,
     required this.isReturned,
   });
 
-  Borrowing copyWith({
-    String? id,
-    String? bookId,
-    String? userId,
-    DateTime? borrowedAt,
-    DateTime? returnedAt,
-    DateTime? dueDate,
-    bool? isReturned,
-  }) {
-    return Borrowing(
-      id: id ?? this.id,
-      bookId: bookId ?? this.bookId,
-      userId: userId ?? this.userId,
-      borrowedAt: borrowedAt ?? this.borrowedAt,
-      returnedAt: returnedAt ?? this.returnedAt,
-      dueDate: dueDate ?? this.dueDate,
-      isReturned: isReturned ?? this.isReturned,
-    );
+  bool get isOverdue {
+    if (isReturned) return false;
+    return DateTime.now().isAfter(dueDate);
+  }
+
+  int get daysOverdue {
+    if (!isOverdue) return 0;
+    return DateTime.now().difference(dueDate).inDays;
   }
 
   @override
@@ -47,7 +39,5 @@ class Borrowing {
   int get hashCode => id.hashCode;
 
   @override
-  String toString() {
-    return 'Borrowing(id: $id, bookId: $bookId, isReturned: $isReturned)';
-  }
+  String toString() => 'Borrowing(id: $id, bookId: $bookId, userId: $userId)';
 }

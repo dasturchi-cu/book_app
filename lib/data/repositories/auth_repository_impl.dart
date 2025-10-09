@@ -89,6 +89,7 @@ class AuthRepositoryImpl implements AuthRepository {
         'email': request.email,
         'firstName': request.firstName ?? 'New',
         'lastName': request.lastName ?? 'User',
+        'regionId': request.regionId,
         'roles': ['User']
       };
       

@@ -1,61 +1,88 @@
-import 'package:dio/dio.dart';
 import 'package:book_app/domain/entities/genre.dart';
 import 'package:book_app/domain/repositories/genre_repository.dart';
+import 'package:book_app/data/datasources/genre_api_service.dart';
 import 'package:book_app/data/models/genre_model.dart';
-import 'package:book_app/core/network/api_client.dart';
-import 'package:book_app/core/constants/app_constants.dart';
+import 'package:book_app/core/errors/app_exceptions.dart';
 
 class GenreRepositoryImpl implements GenreRepository {
-  final Dio _dio = ApiClient.instance;
+  final GenreApiService _apiService;
+
+  GenreRepositoryImpl({required GenreApiService apiService})
+      : _apiService = apiService;
 
   @override
-  Future<List<Genre>> getAllGenres() async {
+  Future<List<Genre>> getGenres() async {
     try {
-      final response = await _dio.get(ApiEndpoints.genres);
-      final List<dynamic> jsonList = response.data;
-      
-      return jsonList
-          .map((json) => GenreModel.fromJson(json).toEntity())
-          .toList();
+      final genreModels = await _apiService.getGenres();
+      return genreModels.map((model) => model.toEntity()).toList();
+    } on ApiException catch (e) {
+      throw ApiException('Failed to fetch genres: ${e.message}');
     } catch (e) {
-      throw Exception('Failed to get genres: $e');
+      throw ApiException('Unexpected error while fetching genres: $e');
     }
   }
 
   @override
   Future<Genre> getGenreById(String id) async {
     try {
-      final response = await _dio.get(
-        '${ApiEndpoints.genres}/$id',
-      );
-      
-      return GenreModel.fromJson(response.data).toEntity();
+      final genreModel = await _apiService.getGenreById(int.parse(id));
+      return genreModel.toEntity();
+    } on ApiException catch (e) {
+      throw ApiException('Failed to fetch genre: ${e.message}');
     } catch (e) {
-      throw Exception('Failed to get genre: $e');
+      throw ApiException('Unexpected error while fetching genre: $e');
     }
   }
 
   @override
-  Future<List<Genre>> searchGenres(String query) async {
+  Future<Genre> createGenre(String genreName) async {
     try {
-      final response = await _dio.get(
-        ApiEndpoints.genres,
-        queryParameters: {'search': query},
-      );
-      final List<dynamic> jsonList = response.data;
-      
-      return jsonList
-          .map((json) => GenreModel.fromJson(json).toEntity())
-          .toList();
+      final genreModel = await _apiService.createGenre(genreName);
+      return genreModel.toEntity();
+    } on ApiException catch (e) {
+      throw ApiException('Failed to create genre: ${e.message}');
     } catch (e) {
-      // Fallback to local search
-      final genres = await getAllGenres();
-      final lowercaseQuery = query.toLowerCase();
+      throw ApiException('Unexpected error while creating genre: $e');
+    }
+  }
 
-      return genres.where((genre) {
-        return genre.name.toLowerCase().contains(lowercaseQuery) ||
-            genre.description?.toLowerCase().contains(lowercaseQuery) == true;
-      }).toList();
+  @override
+  Future<Genre> updateGenre({
+    required String id,
+    required String genreName,
+  }) async {
+    try {
+      final genreModel = await _apiService.updateGenre(
+        id: int.parse(id),
+        genreName: genreName,
+      );
+      return genreModel.toEntity();
+    } on ApiException catch (e) {
+      throw ApiException('Failed to update genre: ${e.message}');
+    } catch (e) {
+      throw ApiException('Unexpected error while updating genre: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteGenre(String id) async {
+    try {
+      await _apiService.deleteGenre(int.parse(id));
+    } on ApiException catch (e) {
+      throw ApiException('Failed to delete genre: ${e.message}');
+    } catch (e) {
+      throw ApiException('Unexpected error while deleting genre: $e');
+    }
+  }
+
+  @override
+  Future<int> getGenreCount() async {
+    try {
+      return await _apiService.getGenreCount();
+    } on ApiException catch (e) {
+      throw ApiException('Failed to get genre count: ${e.message}');
+    } catch (e) {
+      throw ApiException('Unexpected error while getting genre count: $e');
     }
   }
 }

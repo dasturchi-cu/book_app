@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:book_app/core/theme/app_colors.dart';
 import 'package:book_app/core/theme/app_text_styles.dart';
 import 'package:book_app/presentation/controllers/auth_controller.dart';
+import 'package:book_app/presentation/controllers/region_controller.dart';
+import 'package:book_app/domain/entities/region.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -16,19 +18,25 @@ class _RegisterPageState extends State<RegisterPage> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _agreeToTerms = false;
+  String? _selectedRegionId;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize RegionController
+    Get.put(RegionController());
+  }
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -37,6 +45,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
+    final regionController = Get.find<RegionController>();
     
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -116,7 +125,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 TextFormField(
                   controller: _firstNameController,
                   decoration: InputDecoration(
-                    labelText: 'Ism',
+                    labelText: 'Ism *',
                     prefixIcon: const Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -140,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 TextFormField(
                   controller: _lastNameController,
                   decoration: InputDecoration(
-                    labelText: 'Familiya',
+                    labelText: 'Familiya *',
                     prefixIcon: const Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -160,12 +169,58 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 const SizedBox(height: 16),
 
+                // Region Dropdown Field
+                Obx(() {
+                  if (regionController.isLoading.value) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+                  
+                  return DropdownButtonFormField<String>(
+                    value: _selectedRegionId,
+                    decoration: InputDecoration(
+                      labelText: 'Viloyat *',
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                    items: regionController.regions.map((Region region) {
+                      return DropdownMenuItem<String>(
+                        value: region.id,
+                        child: Text(region.name),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedRegionId = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Viloyatni tanlang';
+                      }
+                      return null;
+                    },
+                  );
+                }),
+
+                const SizedBox(height: 16),
+
                 // Email Field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: 'Gmail *',
                     prefixIcon: const Icon(Icons.email_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -177,32 +232,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Email kiriting';
+                      return 'Gmail kiriting';
                     }
                     if (!GetUtils.isEmail(value)) {
-                      return 'To\'g\'ri email kiriting';
+                      return 'To\'g\'ri Gmail kiriting';
                     }
                     return null;
                   },
-                ),
-
-                const SizedBox(height: 16),
-
-                // Phone Field (Optional)
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Telefon raqami (ixtiyoriy)',
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
-                    ),
-                  ),
                 ),
 
                 const SizedBox(height: 16),
@@ -212,7 +248,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
-                    labelText: 'Parol',
+                    labelText: 'Parol *',
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -252,7 +288,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmPasswordVisible,
                   decoration: InputDecoration(
-                    labelText: 'Parolni tasdiqlang',
+                    labelText: 'Parolni tasdiqlang *',
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -399,7 +435,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _passwordController.text,
         _firstNameController.text,
         _lastNameController.text,
-        phoneNumber: _phoneController.text.isNotEmpty ? _phoneController.text : null,
+        _selectedRegionId!,
       );
     }
   }

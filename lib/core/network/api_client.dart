@@ -8,8 +8,9 @@ class ApiClient {
   static void initialize() {
     _dio.options = BaseOptions(
       baseUrl: 'http://194.93.25.19:5050',
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 10), // Reduced timeout
+      receiveTimeout: const Duration(seconds: 10), // Reduced timeout
+      sendTimeout: const Duration(seconds: 10), // Added send timeout
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -19,7 +20,11 @@ class ApiClient {
     // Add interceptors
     _dio.interceptors.addAll([
       AuthInterceptor(),
-      LogInterceptor(requestBody: true, responseBody: true),
+      LogInterceptor(
+        requestBody: false, // Disable request body logging
+        responseBody: false, // Disable response body logging
+        logPrint: (obj) => print(obj), // Custom log print
+      ),
       ErrorInterceptor(),
     ]);
   }
@@ -60,6 +65,9 @@ class ErrorInterceptor extends Interceptor {
     final msg = err.response?.data is Map
         ? ((err.response?.data)['message']?.toString() ?? err.message)
         : err.message;
+    
+    // Log error for debugging
+    print('API Error: $status - $msg');
     switch (status) {
       case 401:
         handler.reject(DioException(requestOptions: err.requestOptions, error: ApiError('Unauthorized', statusCode: 401)));
